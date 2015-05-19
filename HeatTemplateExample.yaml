@@ -1,0 +1,52 @@
+heat_template_version: 2013-05-23
+
+description: >
+  Example of deploying a server and associating a floating ip address
+  using heat_template_version.  This version supports IceHouse and later.
+
+parameters:
+  image_name:
+    type: string
+    description: name of the template to deploying
+    default: cirros
+
+  instance_type:
+    type: string
+    description: Flavor name
+    default: m1.tiny
+
+  pool_name:
+    type: string
+    description: Name of external network for floating ip assignment
+    default: public
+
+resources:
+  instance:
+    type: OS::Nova::Server
+    properties:
+      image: { get_param: image_name }
+      flavor: { get_param: instance_type }
+      security_groups: [ "default" ]
+
+  floating_ip:
+    type: OS::Nova::FloatingIP
+    depends_on: instance
+    properties:
+      pool: { get_param: pool_name }
+
+  association:
+    type: OS::Nova::FloatingIPAssociation
+    depends_on: floating_ip
+    properties:
+      server_id: { get_resource: instance }
+      floating_ip: { get_resource: floating_ip }
+
+outputs:
+  floating_ip:
+     description: the floating_ip deployed
+     value: { get_attr: [ floating_ip, ip ] }
+
+  private_ip:
+     description: The private ip of the instance deployed
+     value: { get_attr: [ instance, first_address ] }
+
