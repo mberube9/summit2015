@@ -1,0 +1,287 @@
+---
+- MiqPolicySet:
+    name: dd1698b0-e59d-11e3-96d8-001a4ab4f909
+    description: Linux Security Check
+    set_type: MiqPolicySet
+    guid: dd1698b0-e59d-11e3-96d8-001a4ab4f909
+    read_only: 
+    set_data: 
+    mode: control
+    owner_type: 
+    owner_id: 
+    userid: 
+    group_id: 
+    MiqPolicy:
+    - name: b03a4e74-473e-11e4-b745-005056b3585a
+      description: Shell-Shock Vulnerability
+      expression: !ruby/object:MiqExpression
+        exp:
+          INCLUDES:
+            field: Vm-os_image_name
+            value: linux
+        context_type: 
+      towhat: Vm
+      guid: b03a4e74-473e-11e4-b745-005056b3585a
+      created_by: admin
+      updated_by: admin
+      notes: |-
+        This policy is based on https://access.redhat.com/articles/1200223.
+        Red Hat Enterprise Linux 6
+        bash-4.1.2-15.el6_5.2
+        bash-4.1.2-15.el6_5.1.sjis.2
+        bash-4.1.2-9.el6_2.2
+        bash-4.1.2-15.el6_4.2
+      active: true
+      mode: compliance
+      MiqPolicyContent:
+      - qualifier: failure
+        failure_sequence: 3
+        MiqEvent:
+          name: vm_compliance_check
+          description: VM Compliance Check
+          guid: 42b1bd96-317e-11e3-88e1-005056b80000
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: d4ea28d8-f051-11e2-97c5-000c297e26aa
+          description: Send Email to Security Team
+          guid: d4ea28d8-f051-11e2-97c5-000c297e26aa
+          action_type: email
+          options:
+            :from: cloudforms_noreply@redhat.com
+            :to: john@jhardy.co.uk
+      - qualifier: failure
+        failure_sequence: 2
+        MiqEvent:
+          name: vm_compliance_check
+          description: VM Compliance Check
+          guid: 42b1bd96-317e-11e3-88e1-005056b80000
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: compliance_failed
+          description: Mark as Non-Compliant
+          guid: 339f0cc8-317e-11e3-88e1-005056b80000
+          action_type: default
+          options: {}
+      - qualifier: failure
+        failure_sequence: 1
+        MiqEvent:
+          name: vm_compliance_check
+          description: VM Compliance Check
+          guid: 42b1bd96-317e-11e3-88e1-005056b80000
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: log
+          description: Generate log message
+          guid: e800c9aa-d60f-11e3-85b2-001a4ab4f909
+          action_type: default
+          options: {}
+      Condition:
+      - name: 20a8dc70-e245-11e3-9d65-005056b80000
+        description: Vulnerable bash Package (ShellShock)
+        modifier: allow
+        expression: !ruby/object:MiqExpression
+          exp:
+            and:
+            - CONTAINS:
+                field: Vm.guest_applications-name
+                value: bash
+            - FIND:
+                search:
+                  "=":
+                    field: Vm.guest_applications-version
+                    value: 4.1.2
+                checkall:
+                  REGULAR EXPRESSION MATCHES:
+                    field: Vm.guest_applications-release
+                    value: 1[5]\.(el6_5.2\b|el6_5.1.sjis.2(?!\.)|el6_4.2)
+          context_type: 
+        towhat: Vm
+        file_mtime: 
+        guid: 20a8dc70-e245-11e3-9d65-005056b80000
+        filename: 
+        applies_to_exp: 
+        miq_policy_id: 
+        notes: 
+- MiqPolicySet:
+    name: fbc1c9bc-53f9-11e0-babf-00505688000a
+    description: 'Tag Management: Inheritance Policy'
+    set_type: MiqPolicySet
+    guid: fbc1c9bc-53f9-11e0-babf-00505688000a
+    read_only: 
+    set_data:
+      :notes: This policy profile contains policies that enforce Host and VM inheritence
+        of parent cluster tags.
+    mode: control
+    owner_type: 
+    owner_id: 
+    userid: 
+    group_id: 
+    MiqPolicy:
+    - name: 0c2517d8-1ea2-11e0-8e71-005056910000
+      description: 'Tag: VM Inherit Cluster Location Tag'
+      expression: 
+      towhat: Vm
+      guid: 0c2517d8-1ea2-11e0-8e71-005056910000
+      created_by: admin
+      updated_by: admin
+      notes: This policy allows a vm to inherit the location tag of it's parent cluster
+        on creation or completion of analysis
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        MiqEvent:
+          name: vm_scan_complete
+          description: VM Analysis Complete
+          guid: f7b8361e-1139-11e1-9333-005056af009e
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 60e5d690-1ea2-11e0-8e71-005056910000
+          description: 'Tag: Inherit Cluster Location Tag'
+          guid: 60e5d690-1ea2-11e0-8e71-005056910000
+          action_type: inherit_parent_tags
+          options:
+            :parent_type: ems_cluster
+            :cats:
+            - location
+      - qualifier: success
+        success_sequence: 1
+        MiqEvent:
+          name: vm_create
+          description: VM Create Complete
+          guid: 4c0b4f12-37c0-11df-b567-005056a40709
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 60e5d690-1ea2-11e0-8e71-005056910000
+          description: 'Tag: Inherit Cluster Location Tag'
+          guid: 60e5d690-1ea2-11e0-8e71-005056910000
+          action_type: inherit_parent_tags
+          options:
+            :parent_type: ems_cluster
+            :cats:
+            - location
+      Condition: []
+- MiqPolicySet:
+    name: 3be240d8-2866-11de-af2a-0050568026c2
+    description: 'Mandatory: Provisioning and Retirement'
+    set_type: MiqPolicySet
+    guid: 3be240d8-2866-11de-af2a-0050568026c2
+    read_only: 
+    set_data:
+      :notes: 'This policy profile is REQUIRED if EVM is being used to Provision or
+        Retire vms. It must be entitled to the desired management systems. Note: this
+        policy profile will potentially result in the removal of a vm from the management
+        system upon retirement if the associated VM Retirement statemachine [/Factory/StateMachine/VMRetirement]
+        in the the Automate model is configured to delete vms. It is not configured
+        for vm deletion out-of-the-box.'
+    mode: control
+    owner_type: 
+    owner_id: 
+    userid: 
+    group_id: 
+    MiqPolicy:
+    - name: 427a4378-6519-11df-b637-005056a435be
+      description: 'Analysis: Post Provisioning'
+      expression: 
+      towhat: Vm
+      guid: 427a4378-6519-11df-b637-005056a435be
+      created_by: admin
+      updated_by: admin
+      notes: This policy triggers a vm analysis of any newly provisioned VM
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        MiqEvent:
+          name: vm_provisioned
+          description: VM Provision Complete
+          guid: 2a17a20a-3e8e-11df-9fe2-005056a435be
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: vm_analyze
+          description: Initiate SmartState Analysis for VM
+          guid: 5cbe1082-ce35-11de-a117-005056b0503e
+          action_type: default
+          options: {}
+      Condition: []
+    - name: Automation Policy - Scope VM Retirement Warning,  ResponseExecute Automation
+        Model
+      description: 'Operational: Retirement Warning'
+      expression: 
+      towhat: Vm
+      guid: 39621392-2866-11de-af2a-0050568026c2
+      created_by: 
+      updated_by: admin
+      notes: This policy raises an automation event when a retirement warning event
+        is raised
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        failure_synchronous: true
+        MiqEvent:
+          name: vm_retire_warn
+          description: VM Retirement Warning
+          guid: 97c85330-fe93-11dd-b5e1-005056903dbc
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: raise_automation_event
+          description: Raise Automation Event
+          guid: e7da3b7a-1139-11e1-9333-005056af009e
+          action_type: default
+          options: {}
+      Condition: []
+    - name: Automation Policy - Scope VM Retired Response Execute Automation Model
+      description: 'Operational: Vm Retired'
+      expression: 
+      towhat: Vm
+      guid: 397700ae-2866-11de-af2a-0050568026c2
+      created_by: 
+      updated_by: admin
+      notes: This policy raises an automation event when a vm retirement event is
+        raised
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        failure_synchronous: true
+        MiqEvent:
+          name: vm_retired
+          description: VM Retired
+          guid: e363d8aa-1e1e-11de-8918-0050568005db
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: raise_automation_event
+          description: Raise Automation Event
+          guid: e7da3b7a-1139-11e1-9333-005056af009e
+          action_type: default
+          options: {}
+      Condition: []
